@@ -1,7 +1,9 @@
 class Zerodha:
 
-    def __init__(self, kiteObj) -> None:
-        self.kiteObj = kiteObj
+    def __init__(self, kiteObj, tick_transfer, order_update) -> None:
+        self.kiteObj        = kiteObj
+        self.tick_transfer  = tick_transfer 
+        self.order_update   = order_update
 
     def get_instruments(self):
         return self.kiteObj.instruments(exchange='NFO')
@@ -27,19 +29,18 @@ class Zerodha:
             #logging.info("Order placement failed: {}".format(e.message)
             pass
 
-    def on_ticks(ws, ticks):
+    def on_ticks(self, ws, ticks):
         # Callback to receive ticks.
         #logging.debug("Ticks: {}".format(ticks))
-        pass
+        self.tick_transfer.put(ticks)
 
     def on_connect(self, ws, response):
-        # Callback on successful connect.
-        # Subscribe to a list of instrument_tokens (RELIANCE and ACC here).
-        ws.subscribe([738561, 5633])
+        print('inside on connect')
 
-        # Set RELIANCE to tick in `full` mode.
-        ws.set_mode(ws.MODE_FULL, [738561])
-
+    def on_order_update(self, ws, data):
+        #callback to recieve order update
+        self.order_update.put(data)
+    
     def on_close(self, ws, code, reason):
         # On connection close stop the event loop.
         # Reconnection will not happen after executing `ws.stop()`
