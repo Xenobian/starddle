@@ -43,10 +43,12 @@ order_update_thread .start()
 #starting kite ticker in Threadded mode
 kws.connect(threaded=True)
 
+#wait for ticker to initialize properly
+time.sleep(1)
+
 #initiate inital position
 straddle.position_taker()
 
-#subscribe to instuemnts
 kws.subscribe([straddle.call_token,straddle.put_token]) 
 
 #Wait for exit time

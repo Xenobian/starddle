@@ -27,7 +27,7 @@ class Zerodha:
 
         except Exception as e:
             #logging.info("Order placement failed: {}".format(e.message)
-            pass
+            print(e)
 
     def on_ticks(self, ws, ticks):
         # Callback to receive ticks.
@@ -40,7 +40,9 @@ class Zerodha:
     def on_order_update(self, ws, data):
         #callback to recieve order update
         self.order_update.put(data)
-    
+        #subscribe to instuemnts
+        
+
     def on_close(self, ws, code, reason):
         # On connection close stop the event loop.
         # Reconnection will not happen after executing `ws.stop()`

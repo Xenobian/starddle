@@ -38,48 +38,55 @@ class Straddle:
 
             #getting order
             order = self.order_update.get()
-            print(order)
-
+    
             #if the option is PUT option
-            print(order['tradingsymbol'], type(order['tradingsymbol']))
-            if (order['tradingsymbol'] == self.put_option) and (order['status'] == 'COMPLETE'):
-                
-                if order['transaction_type'] == 'SELL' :
-                    self.put_option += -1
-                    self.put_price = order['average_price']
-                    self.put_SL_val = self.put_price * ( self.put_sl + 1)
-                    print("call sl",self.call_SL_val)
-                if order['transaction_type'] == 'BUY' :
-                    self.put_option += 1 
+           
+            if (str(order['tradingsymbol']) == self.put_option) and (str(order['status']) == 'COMPLETE'):
+            
+                if str(order['transaction_type']) == 'SELL':
+                    self.put_position  += -1
+                    self.put_price     = float(order['average_price'])
+                    self.put_sl_val    = self.put_price * ( self.put_sl + 1)
+                    print("call sl",self.put_sl_val)
+
+                if order['transaction_type'] == 'BUY':
+                    self.put_position += 1 
 
 
             #if the option is CALL option
-            elif (order['tradingsymbol'] == self.call_option) and (order['status'] == 'COMPLETE'):
+            elif (str(order['tradingsymbol']) == self.call_option) and (str(order['status'])  == 'COMPLETE'):
                 
-                if order['transaction_type'] == 'SELL' :
-                    self.call_option += -1
-                    self.call_price = order['average_price']
-                    self.put_SL_val = self.put_price * ( self.put_sl + 1)
-                    print("put sl",self.put_SL_val)
+                if str(order['transaction_type']) == 'SELL' :
+                    self.call_position  += -1
+                    self.call_price     = float(order['average_price'])
+                    self.call_sl_val    = self.call_price * ( self.call_sl + 1)
+                    print("put sl",self.call_sl_val)
+
                 if order['transaction_type'] == 'BUY' :
-                    self.call_option += 1 
+                    self.call_position += 1 
 
     def tick_reciever(self):
         while not self.EXIT_CONDITION: 
             ticks = self.tick_transfer.get()
             for tick in ticks:
-                #print(tick)
-                pass
-                # iterate through ticks
-                #  if call_tick:
-                ##  if call position is -1
-                ###   check if sl hit ? --> exit and wait for position to change else throw error
-                #  if put_tick:
-                ##  if put position is -1
-                ###   check if sl hit ? --> exit and wait for position to change else throw error
+                # CALL side SL check
+                if int(tick['instrument_token']) == self.call_token and self.call_position == -1:
+                    if float(tick['last_price']) >= self.call_sl_val:
+                        print('CALL sl hit')
+                        self.zerodha_obj.place_order(tradingsymbol=self.call_option, transaction_type='BUY')
 
-                #check for any open positions
-                #close them
+                        while self.call_position != 0:
+                            time.sleep(0.25)
+                            
+                # PUT side SL check
+                if int(tick['instrument_token']) == self.put_token and self.put_position == -1:
+                    if float(tick['last_price']) >= self.put_sl_val:
+                        print('PUT sl hit')
+                        self.zerodha_obj.place_order(tradingsymbol=self.put_option, transaction_type='BUY')
+
+                        while self.put_position != 0:
+                            time.sleep(0.25)
+            
                 
     
     def position_taker(self):
@@ -106,14 +113,16 @@ class Straddle:
         #calculating CALL strike
         CALL_strike = ADJ_BNF_LEVEL + 100
         #fetching CALL option
-        self.call_option = self.optionsChainDF [(self.optionsChainDF ['instrument_type'].str.contains('CE')) & (self.optionsChainDF ['strike'] == CALL_strike)]['tradingsymbol']
-        self.call_token  = self.optionsChainDF [(self.optionsChainDF ['instrument_type'].str.contains('CE')) & (self.optionsChainDF ['strike'] == CALL_strike)]['instrument_token']
+        self.call_option = str(self.optionsChainDF[(self.optionsChainDF ['instrument_type'].str.contains('CE')) & (self.optionsChainDF ['strike'] == CALL_strike)]['tradingsymbol'].values[0])
+        self.call_token  = int(self.optionsChainDF[(self.optionsChainDF ['instrument_type'].str.contains('CE')) & (self.optionsChainDF ['strike'] == CALL_strike)]['instrument_token'].values[0])
 
         #calculating PUT strike
         PUT_strike = ADJ_BNF_LEVEL - 100
         #fetching PUT option
-        self.put_option = self.optionsChainDF [(self.optionsChainDF ['instrument_type'].str.contains('PE')) & (self.optionsChainDF ['strike'] == PUT_strike)]['tradingsymbol']
-        self.put_token  = self.optionsChainDF [(self.optionsChainDF ['instrument_type'].str.contains('PUT')) & (self.optionsChainDF ['strike'] == PUT_strike)]['instrument_token']
+        self.put_option = str(self.optionsChainDF[(self.optionsChainDF ['instrument_type'].str.contains('PE')) & (self.optionsChainDF ['strike'] == PUT_strike)]['tradingsymbol'].values[0])
+        self.put_token  = int(self.optionsChainDF[(self.optionsChainDF ['instrument_type'].str.contains('PE')) & (self.optionsChainDF ['strike'] == PUT_strike)]['instrument_token'].values[0])
+        
+        print(self.put_token, self.call_token)
         #placing sell order for CALL
         self.zerodha_obj.place_order(tradingsymbol=self.call_option, transaction_type='SELL')
 
@@ -122,7 +131,7 @@ class Straddle:
 
         #confirm if got sold
         while self.put_position != -1 and self.call_position != -1:
-            print("waiting for position to be initiated")
+            print("waiting for position to be initiated",self.put_position,self.call_position)
             time.sleep(0.5)
 
     def latest_expiry_options_chain(self):
