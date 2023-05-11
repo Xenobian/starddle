@@ -90,8 +90,13 @@ class Straddle:
                             time.sleep(0.25)
 
         #exit out any open position on time end
-            
-                
+        if self.call_position == -1:
+            self.zerodha_obj.place_order(tradingsymbol=self.call_option, transaction_type='BUY')
+
+        if self.put_position == -1:
+            self.zerodha_obj.place_order(tradingsymbol=self.put_option, transaction_type='BUY')
+
+
     def exit_condition_checker(self):
 
         #getting current seconds
