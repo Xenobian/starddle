@@ -52,8 +52,7 @@ straddle.position_taker()
 kws.subscribe([straddle.call_token,straddle.put_token]) 
 
 #Wait for exit time
-while not straddle.EXIT_CONDITION:
-    time.sleep(30)
+straddle.exit_condition_checker()
 
 #closing out threads
 tick_reciever_thread.join()

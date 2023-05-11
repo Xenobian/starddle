@@ -1,19 +1,20 @@
 import pandas as pd
 import time
+import datetime
 
 class Straddle:
 
     def __init__(self, zerodha, tick_transfer, order_update) -> None:
         
         self.put_position    = 0
-        self.put_sl          = 0.15
+        self.put_sl          = 0.50
         self.put_sl_val      = None
         self.put_option      = None
         self.put_token       = 0
         self.put_price       = None
 
         self.call_position   = 0
-        self.call_sl         = 0.15
+        self.call_sl         = 0.50
         self.call_sl_val     = None
         self.call_option     = None
         self.call_token      = 0
@@ -27,6 +28,7 @@ class Straddle:
         self.optionsChainDF  = None
 
         self.EXIT_CONDITION  = False
+        self.exit_time       = datetime.datetime(2023, 5, 11, 15, 25, 0).time()
 
         self.tick_transfer  = tick_transfer 
         self.order_update   = order_update
@@ -47,7 +49,7 @@ class Straddle:
                     self.put_position  += -1
                     self.put_price     = float(order['average_price'])
                     self.put_sl_val    = self.put_price * ( self.put_sl + 1)
-                    print("call sl",self.put_sl_val)
+                    print("call sl",self.call_sl_val)
 
                 if order['transaction_type'] == 'BUY':
                     self.put_position += 1 
@@ -55,12 +57,12 @@ class Straddle:
 
             #if the option is CALL option
             elif (str(order['tradingsymbol']) == self.call_option) and (str(order['status'])  == 'COMPLETE'):
-                
+
                 if str(order['transaction_type']) == 'SELL' :
                     self.call_position  += -1
                     self.call_price     = float(order['average_price'])
                     self.call_sl_val    = self.call_price * ( self.call_sl + 1)
-                    print("put sl",self.call_sl_val)
+                    print("put sl",self.put_sl_val)
 
                 if order['transaction_type'] == 'BUY' :
                     self.call_position += 1 
@@ -86,9 +88,24 @@ class Straddle:
 
                         while self.put_position != 0:
                             time.sleep(0.25)
+
+        #exit out any open position on time end
             
                 
-    
+    def exit_condition_checker(self):
+
+        #getting current seconds
+        current_time    = datetime.datetime.now()
+        current_seconds = (current_time.hour * 3600) + (current_time.minute * 60) + current_time.second
+
+        #converting exit time into seconds
+        exit_seconds    = (self.exit_time.hour * 3600) + (self.exit_time.minute * 60) + self.exit_time.second
+        print(current_seconds, exit_seconds, "seconds")
+
+        #sleeping for remainder of time
+        time.sleep(exit_seconds - current_seconds)
+        self.EXIT_CONDITION  = True
+
     def position_taker(self):
         
         # wait for start time
