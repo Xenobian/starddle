@@ -49,7 +49,7 @@ class Straddle:
                     self.put_position  += -1
                     self.put_price     = float(order['average_price'])
                     self.put_sl_val    = self.put_price * ( self.put_sl + 1)
-                    print("call sl",self.call_sl_val)
+                    print("put sl",self.put_sl_val)
 
                 if order['transaction_type'] == 'BUY':
                     self.put_position += 1 
@@ -62,7 +62,7 @@ class Straddle:
                     self.call_position  += -1
                     self.call_price     = float(order['average_price'])
                     self.call_sl_val    = self.call_price * ( self.call_sl + 1)
-                    print("put sl",self.put_sl_val)
+                    print("call sl",self.call_sl_val)
 
                 if order['transaction_type'] == 'BUY' :
                     self.call_position += 1 
@@ -120,7 +120,7 @@ class Straddle:
                 or (current_time.tm_hour == 9 and current_time.tm_min > 19)
                 or (current_time.tm_hour == 9 and current_time.tm_min == 19 and current_time.tm_sec >= 30)):
                 break
-            time.sleep(1)
+            time.sleep(0.12)
                 
         # calculate BNF level
         symbol = "NSE:NIFTY BANK"
