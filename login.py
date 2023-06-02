@@ -8,12 +8,12 @@ import pyotp
 
 class Login:
 
-    def __init__(self) -> None:
-        self.API_KEY    = 'cjqx8u4zedif6m4i'
-        self.API_SECRET = 'y2q7xt151teakfs1qebnforcmouutekw'
-        self.USER_ID    = 'CS7249'
-        self.PWD        = 'QGe_@7A9'
-        self.twoFAKey   = '733SF4CUBDJIS7HKRA4LJWGM4HNIH5KB'
+    def __init__(self, parameters) -> None:
+        self.API_KEY    = parameters['API_KEY']
+        self.API_SECRET = parameters['API_SECRET']
+        self.USER_ID    = parameters['CSID']
+        self.PWD        = parameters['password']
+        self.twoFAKey   = parameters['2faKey']
 
         self.request_token = None
 

@@ -1,0 +1,17 @@
+{
+    "account":{
+                "CSID":"CS7249",
+                "password":"QGe_@7A9",
+                "2faKey":"733SF4CUBDJIS7HKRA4LJWGM4HNIH5KB",
+                "API_KEY":"cjqx8u4zedif6m4i",
+                "API_SECRET":"y2q7xt151teakfs1qebnforcmouutekw"
+            },
+    
+    "straddle":{
+                "entry_time":"09:19:50",
+                "exit_time":"14:30:00   ",
+                "lots":"1",
+                "strike":"100",
+                "sl_percentage":"0.15"
+    }
+}

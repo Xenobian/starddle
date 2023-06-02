@@ -4,31 +4,32 @@ import datetime
 
 class Straddle:
 
-    def __init__(self, zerodha, tick_transfer, order_update) -> None:
+    def __init__(self, zerodha, tick_transfer, order_update, parameters) -> None:
         
         self.put_position    = 0
-        self.put_sl          = 0.50
+        self.put_sl          = parameters['sl_percentage']
         self.put_sl_val      = None
         self.put_option      = None
         self.put_token       = 0
         self.put_price       = None
 
         self.call_position   = 0
-        self.call_sl         = 0.50
+        self.call_sl         = parameters['sl_percentage']
         self.call_sl_val     = None
         self.call_option     = None
         self.call_token      = 0
         self.call_price      = None
 
-        self.end_time        = None
-        self.start_time      = None
-
         self.zerodha_obj     = zerodha
 
         self.optionsChainDF  = None
 
+        self.strike          = int(parameters['strike'])
+
+        self.entry_time      = parameters['entry_time'].split(':')  
         self.EXIT_CONDITION  = False
-        self.exit_time       = datetime.datetime(2023, 5, 11, 15, 25, 0).time()
+        self.exit_time_list  = parameters['exit_time'].split(':')   
+        self.exit_time       = datetime.datetime(2023, 5, 11, int(self.exit_time_list[0]), int(self.exit_time_list[1]), int(self.exit_time_list[2])).time()
 
         self.tick_transfer  = tick_transfer 
         self.order_update   = order_update
@@ -116,9 +117,9 @@ class Straddle:
         # wait for start time
         while True:
             current_time = time.localtime()
-            if (current_time.tm_hour > 9
-                or (current_time.tm_hour == 9 and current_time.tm_min > 19)
-                or (current_time.tm_hour == 9 and current_time.tm_min == 19 and current_time.tm_sec >= 30)):
+            if (current_time.tm_hour > int(self.entry_time[0])
+                or (current_time.tm_hour == int(self.entry_time[0]) and current_time.tm_min > int(self.entry_time[1]))
+                or (current_time.tm_hour == int(self.entry_time[0]) and current_time.tm_min == int(self.entry_time[1]) and current_time.tm_sec >= int(self.entry_time[2]))):
                 break
             time.sleep(0.12)
                 
@@ -133,13 +134,13 @@ class Straddle:
             ADJ_BNF_LEVEL = BNF_LEVEL -(BNF_LEVEL % 100)
 
         #calculating CALL strike
-        CALL_strike = ADJ_BNF_LEVEL + 100
+        CALL_strike = ADJ_BNF_LEVEL + self.strike 
         #fetching CALL option
         self.call_option = str(self.optionsChainDF[(self.optionsChainDF ['instrument_type'].str.contains('CE')) & (self.optionsChainDF ['strike'] == CALL_strike)]['tradingsymbol'].values[0])
         self.call_token  = int(self.optionsChainDF[(self.optionsChainDF ['instrument_type'].str.contains('CE')) & (self.optionsChainDF ['strike'] == CALL_strike)]['instrument_token'].values[0])
 
         #calculating PUT strike
-        PUT_strike = ADJ_BNF_LEVEL - 100
+        PUT_strike = ADJ_BNF_LEVEL - self.strike 
         #fetching PUT option
         self.put_option = str(self.optionsChainDF[(self.optionsChainDF ['instrument_type'].str.contains('PE')) & (self.optionsChainDF ['strike'] == PUT_strike)]['tradingsymbol'].values[0])
         self.put_token  = int(self.optionsChainDF[(self.optionsChainDF ['instrument_type'].str.contains('PE')) & (self.optionsChainDF ['strike'] == PUT_strike)]['instrument_token'].values[0])
